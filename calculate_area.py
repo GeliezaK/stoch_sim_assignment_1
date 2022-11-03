@@ -26,7 +26,7 @@ def make_random_point():
     # random radius
     r = circle_r * math.sqrt(np.random.random())
     # calculating coordinates
-    c = np.complex((r * math.cos(alpha) + circle_x), (r * math.sin(alpha) + circle_y ))
+    c = complex((r * math.cos(alpha) + circle_x), (r * math.sin(alpha) + circle_y ))
     return c
 
 def draw_random_numbers(s):
@@ -41,9 +41,9 @@ if __name__ == '__main__':
     height = 400
     im = Image.new("RGB", (400, 400), color ="black")
     draw = ImageDraw.Draw(im)
-    samples = draw_random_numbers(1000)
+    samples = draw_random_numbers(50000)
     for i in range(len(samples)):
-        real = width/2 + np.real(samples[i]) * width/2
-        imag = height/2 + np.imag(samples[i]) * height/2
+        real = width/2 + np.real(samples[i]) * width/4
+        imag = height/2 + np.imag(samples[i]) * height/4  # should be height/(2*radius)
         draw.point((real, imag), fill="white")
     im.show()
