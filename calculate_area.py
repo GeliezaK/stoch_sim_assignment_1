@@ -3,20 +3,14 @@ import numpy as np
 import math
 from PIL import Image, ImageDraw
 
-def approx_area(s):
-    # fill two arrays uniformly distributed random values between -2 and 2
-    in_set = 0
-    samples = np.zeros((2,s))
-    # for all random values in range, calculate if its in
-
-    # Area is the fraction of points within mandelbrot divided by all samples
-    area = in_set/s
-    pass
+def approx_area(n_samples, n_mandelbrot_samples, circle_r):
+    total_area = np.pi*circle_r*circle_r
+    frac = n_mandelbrot_samples/n_samples
+    mandelbrot_area = total_area*frac
+    return mandelbrot_area
 
 
-def make_random_point():
-    # radius of the circle
-    circle_r = 2
+def make_random_point(circle_r):
     # center of the circle (x, y)
     circle_x = 0
     circle_y = 0
@@ -38,23 +32,38 @@ def is_stable(c, num_iterations):
             return False
     return True
 
-def draw_random_numbers(s):
+def draw_random_numbers(s, circle_r, i):
     # samples = np.zeros(s, dtype=np.csingle)
     samples = []
-    for _ in range(s):
-        c = make_random_point()
-        if is_stable(c, 200):
+    for j in range(s):
+        if j % 100000 == 0:
+            print(f"sample {j}")
+
+        c = make_random_point(circle_r)
+        if is_stable(c, i):
             samples.append(c)
+
     samples = np.array(samples)
     return samples
 
 if __name__ == '__main__':
-    width = 400
-    height = 400
-    im = Image.new("RGB", (400, 400), color ="white")
+    width = 1000
+    height = 1000
+
+    n_samples = int(1e6)
+    n_iterations = 500
+
+    circle_r = 2
+    
+    im = Image.new("RGB", (width, height), color ="white")
     draw = ImageDraw.Draw(im)
-    samples = draw_random_numbers(500000)
-    for i in range(len(samples)):
+    samples = draw_random_numbers(n_samples, circle_r, n_iterations)
+    n_mandel_samples = len(samples)
+
+    area = approx_area(n_samples, n_mandel_samples, circle_r)
+    print(f"Aproximated area of Mandelbrot set = {area}\n(Calculated using {n_samples} sample points and {n_iterations} iterations)")
+
+    for i in range(n_mandel_samples):
         real = width/2 + np.real(samples[i]) * width/4
         imag = height/2 + np.imag(samples[i]) * height/4  # should be height/(2*radius)
         draw.point((real, imag), fill="black")
