@@ -33,6 +33,19 @@ def pure_random_sampler(s):
     return rand1, rand2
 
 
+def antithetic_variate_sampler(s):
+    """Draw 2 vectors of antithetic variates."""
+    rand1 = np.zeros(s)
+    rand2 = np.zeros(s)
+    for i in range(s):
+        if i % 2 == 0:
+            rand1[i] = np.random.random()
+            rand2[i] = np.random.random()
+        else:
+            rand1[i] = 1 - rand1[i-1]
+            rand2[i] = 1 - rand2[i-1]
+    return rand1, rand2
+
 def convert_to_circle(x, y):
     """Convert point (x,y) to a complex circle coordinate."""
     # center of the circle (x, y)
@@ -83,14 +96,14 @@ if __name__ == '__main__':
 
     n_samples = 49729  # must be square of prime number for othogonal sampler
     n_iterations = 500
-    samples = draw_random_numbers(n_samples, orthogonal_sampler, n_iterations)
+    samples = draw_random_numbers(n_samples, antithetic_variate_sampler, n_iterations)
 
     im = Image.new("RGB", (width, height), color ="white")
     draw = ImageDraw.Draw(im)
     n_mandel_samples = len(samples)
 
     area = approx_area(n_samples, n_mandel_samples)
-    print(f"Aproximated area of Mandelbrot set = {area}\n(Calculated using {n_samples} sample points and {n_iterations} iterations)")
+    print(f"Abs error of approximated area of Mandelbrot set = {area - 1.506484}\n(Calculated using {n_samples} sample points and {n_iterations} iterations)")
 
     for i in range(n_mandel_samples):
         real = width/2 + np.real(samples[i]) * width/4
