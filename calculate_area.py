@@ -90,7 +90,7 @@ if __name__ == '__main__':
     n_mandel_samples = len(samples)
 
     area = approx_area(n_samples, n_mandel_samples)
-    print(f"Aproximated area of Mandelbrot set = {area}\n(Calculated using {n_samples} sample points and {n_iterations} iterations)")
+    print(f"Absolute error of aproximated area of Mandelbrot set = {area -  1.506484}\n(Calculated using {n_samples} sample points and {n_iterations} iterations)")
 
     for i in range(n_mandel_samples):
         real = width/2 + np.real(samples[i]) * width/4
