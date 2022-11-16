@@ -5,7 +5,7 @@ from calculate_area import *
 import pandas as pd
 import os.path
 
-MANDEL_AREA = 1.506484  # Estimated value 95% ci
+MANDEL_AREA = 1.5065918849  # Estimated value according to https://web.archive.org/web/20210715173755/https://www.foerstemann.name/dokuwiki/doku.php?id=numerical_estimation_of_the_area_of_the_mandelbrot_set_2012
 
 
 def gen_square_primes():
@@ -46,7 +46,7 @@ def gen_square_primes():
         q += 1
 
 def get_j_convergence():
-    filepath = "convergence-j-data.csv"
+    filepath = "convergence-j-data-s20e4.csv"
 
     if not os.path.isfile(filepath):
         # Generate data
@@ -65,7 +65,7 @@ def get_j_convergence():
     return num_it, res
 
 def get_s_convergence():
-    filepath = "convergence-s-data.csv"
+    filepath = "convergence-s-data-large.csv"
     if not os.path.isfile(filepath):
         # Simulate
         samples, square_primes, res = simulate_s_convergence()
@@ -87,8 +87,8 @@ def get_s_convergence():
 
 def simulate_j_convergence():
     # Init values
-    s = int(100000)
-    num_it = [50, 100, 150, 200, 400, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600]
+    s = int(200000)
+    num_it = [50, 100, 150, 200, 400, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000]
     sampling_methods = [pure_random_sampler, lh_sampler, orthogonal_sampler]
     res = np.zeros((len(num_it), len(sampling_methods)))
 
@@ -99,7 +99,7 @@ def simulate_j_convergence():
             print(f"Sampler index: {sampler_i}, j : {num_it[j]}")
             if sampler == orthogonal_sampler:
                 # Number of samples must be square of prime number for othogonal sampler
-                s = 9409
+                s = 18769
             # Approximate area
             mandel_samples = draw_mandel_samples(s, sampler, num_it[j])
             area = approx_area(s, len(mandel_samples))
@@ -111,7 +111,7 @@ def plot_j_convergence(num_it, res):
     """Plot the convergence of Mandelbrot area estimation for increasing number of iterations"""
     plt.figure(figsize=(10, 6))
     plt.subplot(121)
-    plt.title(f"s = 100000")
+    plt.title(f"s = 200000")
     plt.plot(num_it[:-1], abs(res[-1, 0] - res[:-1, 0]), "bo-", label=f"Pure random sampling")
     plt.plot(num_it[:-1], abs(res[-1, 1] - res[:-1, 1]), "go-", label=f"Latin Hypercube sampling")
     plt.axhline(0, color="black", alpha=0.5, linestyle="dotted")
@@ -127,7 +127,7 @@ def plot_j_convergence(num_it, res):
     ymin2, ymax2 = plt.ylim()
     plt.xlabel("j, Number of Iterations")
     plt.legend()
-    plt.title("s = 9409")
+    plt.title("s = 18769")
     # Set axes equal
     ax1.set_ylim(min(ymin1, ymin2), max(ymax1, ymax2))
     ax2.set_ylim(min(ymin1, ymin2), max(ymax1, ymax2))
@@ -141,8 +141,8 @@ def plot_s_convergence(s, square_primes, res):
     """Plot the convergence of Mandelbrot area estimation for increasing sample sizes s"""
     plt.figure(figsize=(10, 6))
     plt.subplot(121)
-    plt.plot(s[:-1], abs(res[-1, 0] - res[:-1, 0]), "bo-", label=f"Pure random sampling")
-    plt.plot(s[:-1], abs(res[-1, 1] - res[:-1, 1]), "go-", label=f"Latin Hypercube sampling")
+    plt.plot(s[:-1], abs(res[-1, 0] - res[:-1, 0]), "bo-", label=f"Pure Random Sampling")
+    plt.plot(s[:-1], abs(res[-1, 1] - res[:-1, 1]), "go-", label=f"Latin Hypercube Sampling")
     plt.axhline(0, color="black", alpha=0.5, linestyle="dotted")
     plt.ylabel("Absolute Error $\Vert A_{i,k} - A_{i,s} \Vert$")
     plt.xlabel("k, Number of Samples Drawn")
@@ -150,7 +150,7 @@ def plot_s_convergence(s, square_primes, res):
     ax1 = plt.gca()
     ymin1, ymax1 = plt.ylim()
     plt.subplot(122)
-    plt.plot(square_primes[:-1], abs(res[-1, 2] - res[:-1, 2]), "co-", label="Orthogonal sampling")
+    plt.plot(square_primes[:-1], abs(res[-1, 2] - res[:-1, 2]), "co-", label="Orthogonal Sampling")
     plt.axhline(0, color="black", alpha=0.5, linestyle="dotted")
     ax2 = plt.gca()
     ymin2, ymax2 = plt.ylim()
@@ -166,7 +166,7 @@ def plot_s_convergence(s, square_primes, res):
 
 def simulate_s_convergence():
     # Init number of samples
-    s = [10e2, 10e3, 10e4, 20e4, 40e4, 60e4, 80e4, 10e5]  # must be square of prime number for othogonal sampler
+    s = [10e2, 10e3, 10e4, 20e4, 40e4, 60e4, 80e4, 10e5, 20e5, 40e5]  # must be square of prime number for othogonal sampler
 
     # Init number of samples for orthogonal sampler - have to be square prime numbers!
     square_primes = generate_square_primes(s)
@@ -210,36 +210,22 @@ def generate_square_primes(s):
     return square_primes
 
 
-def plot_A_convergence():
-    plt.figure(figsize=(10, 6))
-    plt.subplot(121)
-    plt.plot(s[:-1], abs(res[-1, 0] - res[:-1, 0]), "bo-", label=f"Pure random sampling")
-    plt.plot(s[:-1], abs(res[-1, 1] - res[:-1, 1]), "go-", label=f"Latin Hypercube sampling")
-    plt.axhline(0, color="black", alpha=0.5, linestyle="dotted")
-    plt.ylabel("Absolute Error $\Vert A_{i,k} - A_{i,s} \Vert$")
-    plt.xlabel("k, Number of Samples Drawn")
+def plot_A_convergence(samples, square_primes, res):
+    plt.axhline(MANDEL_AREA, color="black", linestyle="dashed", label="True Value")
+    plt.plot(samples[1:], res[1:, 0], "bo-", label="Pure Random Sampling")
+    plt.plot(samples[1:], res[1:, 1], "go-", label="Latin Hypercube Sampling")
+    plt.plot(square_primes[1:], res[1:,2], "co-", label="Orthogonal Sampling")
     plt.legend()
-    ax1 = plt.gca()
-    ymin1, ymax1 = plt.ylim()
-    plt.subplot(122)
-    plt.plot(square_primes[:-1], abs(res[-1, 2] - res[:-1, 2]), "co-", label="Orthogonal sampling")
-    plt.axhline(0, color="black", alpha=0.5, linestyle="dotted")
-    ax2 = plt.gca()
-    ymin2, ymax2 = plt.ylim()
-    plt.xlabel("k, Number of Samples Drawn")
-    plt.legend()
-    # Set axes equal
-    ax1.set_ylim(min(ymin1, ymin2), max(ymax1, ymax2))
-    ax2.set_ylim(min(ymin1, ymin2), max(ymax1, ymax2))
-    plt.suptitle(f"Convergence of Mandelbrot Area Approximation, i= 2000")
-    plt.savefig("Convergence-s.png")
+    plt.xlabel("k, Number of Samples")
+    plt.ylabel("Estimated Area of Mandelbrot Set")
+    plt.title("Convergence of Mandelbrot Area Approximation \n for Different Sampling Methods")
+    plt.savefig("convergence-a.png")
     plt.show()
+
 
 if __name__ == '__main__':
     num_it, res = get_j_convergence()
-    print(num_it, res)
     plot_j_convergence(num_it, res)
-
     samples, square_primes, res = get_s_convergence()
-    print(samples, square_primes, res)
     plot_s_convergence(samples, square_primes, res)
+    plot_A_convergence(samples, square_primes, res)
