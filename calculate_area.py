@@ -4,12 +4,13 @@ import math
 from scipy.stats import qmc
 from PIL import Image, ImageDraw
 
+
 def approx_area(n_samples, n_mandelbrot_samples):
     """Approximate the area as ratio of samples within Mandelbrot set and total samples drawn from circle with radius 2."""
     circle_r = 2  # circle radius is always 2
-    total_area = np.pi*circle_r*circle_r
-    frac = n_mandelbrot_samples/n_samples
-    mandelbrot_area = total_area*frac
+    total_area = np.pi * circle_r * circle_r
+    frac = n_mandelbrot_samples / n_samples
+    mandelbrot_area = total_area * frac
     return mandelbrot_area
 
 
@@ -24,7 +25,8 @@ def orthogonal_sampler(s):
     """Draw 2 random number samples of size s from orthogonal sampler. NB: s has to be the square root of a prime number."""
     sampler = qmc.LatinHypercube(d=2, strength=2)
     sample = sampler.random(n=s)
-    return sample[:,0], sample[:,1]
+    return sample[:, 0], sample[:, 1]
+
 
 def pure_random_sampler(s):
     """Draw 2 random number samples of size s from pure random generator. """
@@ -38,7 +40,7 @@ def convert_to_circle(x, y):
     # center of the circle (x, y)
     circle_x = 0
     circle_y = 0
-    circle_r = 2 # radius is always 2
+    circle_r = 2  # radius is always 2
 
     # random angle
     alpha = 2 * math.pi * x
@@ -59,11 +61,11 @@ def is_stable(c, num_iterations):
     return True
 
 
-def draw_random_numbers(s, sampler, num_it):
+def draw_mandel_samples(s, sampler, num_it):
     """Given a sample size s, a sampling method sampler and number of iterations num_it; draw random numbers from the mandelbrot set."""
     samples = []
     # Get two random number arrays
-    rand1, rand2 = sampler(n_samples)
+    rand1, rand2 = sampler(s)
     for j in range(s):
         if j % 100000 == 0:
             print(f"sample {j}")
@@ -77,23 +79,17 @@ def draw_random_numbers(s, sampler, num_it):
     return samples
 
 
-if __name__ == '__main__':
+def draw_mandelbrot(mandel_samples):
     width = 1000
     height = 1000
-
-    n_samples = 49729  # must be square of prime number for othogonal sampler
-    n_iterations = 500
-    samples = draw_random_numbers(n_samples, orthogonal_sampler, n_iterations)
-
-    im = Image.new("RGB", (width, height), color ="white")
+    im = Image.new("RGB", (width, height), color="white")
     draw = ImageDraw.Draw(im)
-    n_mandel_samples = len(samples)
 
-    area = approx_area(n_samples, n_mandel_samples)
-    print(f"Absolute error of aproximated area of Mandelbrot set = {area -  1.506484}\n(Calculated using {n_samples} sample points and {n_iterations} iterations)")
-
-    for i in range(n_mandel_samples):
-        real = width/2 + np.real(samples[i]) * width/4
-        imag = height/2 + np.imag(samples[i]) * height/4  # should be height/(2*radius)
+    for i in range(len(mandel_samples)):
+        real = width / 2 + np.real(mandel_samples[i]) * width / 4
+        imag = height / 2 + np.imag(mandel_samples[i]) * height / 4  # should be height/(2*radius)
         draw.point((real, imag), fill="black")
     im.show()
+
+if __name__ == '__main__':
+    pass
