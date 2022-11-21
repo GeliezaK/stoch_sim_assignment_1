@@ -60,10 +60,33 @@ def is_stable(c, num_iterations):
             return False
     return True
 
+def is_stable2(c, num_iterations, mandelpoints_list):
+    stable_list = []
+    z = 0
+    for i, num in enumerate(num_iterations):
+        if num != num_iterations[0]:
+            num = num_iterations[i] - num_iterations[i-1]
+
+        for _ in range(num):
+            if abs(z) > 2:
+                stable_list.append(False)
+                break
+            
+            z = z ** 2 + c
+
+        if abs(z) <= 2:
+            stable_list.append(True)
+        
+    for i, stable in enumerate(stable_list):
+        if stable:
+            mandelpoints_list[i] += 1
+
+    return(mandelpoints_list)
+
 
 def draw_mandel_samples(s, sampler, num_it):
     """Given a sample size s, a sampling method sampler and number of iterations num_it; draw random numbers from the mandelbrot set."""
-    samples = []
+    mandelpoints_list = [0] * len(num_it)
     # Get two random number arrays
     rand1, rand2 = sampler(s)
     for j in range(s):
@@ -72,11 +95,9 @@ def draw_mandel_samples(s, sampler, num_it):
 
         # Convert random numbers to circle points
         c = convert_to_circle(rand1[j], rand2[j])
-        if is_stable(c, num_it):
-            samples.append(c)
+        mandelpoints_list = is_stable2(c, num_it, mandelpoints_list)
 
-    samples = np.array(samples)
-    return samples
+    return mandelpoints_list
 
 
 def draw_mandelbrot(mandel_samples):

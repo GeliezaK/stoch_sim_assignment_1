@@ -46,65 +46,66 @@ def gen_square_primes():
         q += 1
 
 def get_j_convergence():
-    filepath = "convergence-j-data-s20e4.csv"
+    filepath = "convergence-j-stable2_test.csv"
 
-    if not os.path.isfile(filepath):
-        # Generate data
-        num_it, res = simulate_j_convergence()
-        # Save to pandas
-        df = pd.DataFrame(res, columns=["Pure Random", "Latin Hypercube", "Orthogonal"])
-        df["Number of Iterations"] = num_it
-        df.to_csv(filepath, index=False)
-    else:
-        # Read from csv
-        df = pd.read_csv(filepath)
-        num_it = df["Number of Iterations"]
-        num_it = num_it.to_numpy()
-        res = df[["Pure Random", "Latin Hypercube", "Orthogonal"]]
-        res = res.to_numpy()
+    # if not os.path.isfile(filepath):
+    # Generate data
+    num_it, res = simulate_j_convergence()
+    # Save to pandas
+    df = pd.DataFrame(res, columns=["Pure Random", "Latin Hypercube", "Orthogonal"])
+    # df = pd.DataFrame(res, columns=["Pure Random", "Latin Hypercube"])
+    df["Number of Iterations"] = num_it
+    df.to_csv(filepath, index=False)
+    # else:
+    #     # Read from csv
+    #     df = pd.read_csv(filepath)
+    #     num_it = df["Number of Iterations"]
+    #     num_it = num_it.to_numpy()
+    #     # res = df[["Pure Random", "Latin Hypercube", "Orthogonal"]]
+    #     res = df[["Pure Random", "Latin Hypercube"]]
+    #     res = res.to_numpy()
     return num_it, res
 
 def get_s_convergence():
     filepath = "convergence-s-data-large.csv"
-    if not os.path.isfile(filepath):
-        # Simulate
-        samples, square_primes, res = simulate_s_convergence()
-        # Save to pandas
-        df = pd.DataFrame(res, columns=["Pure Random", "Latin Hypercube", "Orthogonal"])
-        df["samples"] = samples
-        df["square-prime-samples"] = square_primes
-        df.to_csv(filepath, index=False)
-    else :
-        # Read from csv
-        df = pd.read_csv(filepath)
-        samples = df["samples"]
-        samples = samples.to_numpy()
-        square_primes = df["square-prime-samples"]
-        square_primes = square_primes.to_numpy()
-        res = df[["Pure Random", "Latin Hypercube", "Orthogonal"]]
-        res = res.to_numpy()
+    # if not os.path.isfile(filepath):
+    # Simulate
+    samples, square_primes, res = simulate_s_convergence()
+    # Save to pandas
+    df = pd.DataFrame(res, columns=["Pure Random", "Latin Hypercube", "Orthogonal"])
+    df["samples"] = samples
+    df["square-prime-samples"] = square_primes
+    df.to_csv(filepath, index=False)
+    # else :
+    #     # Read from csv
+    #     df = pd.read_csv(filepath)
+    #     samples = df["samples"]
+    #     samples = samples.to_numpy()
+    #     square_primes = df["square-prime-samples"]
+    #     square_primes = square_primes.to_numpy()
+    #     res = df[["Pure Random", "Latin Hypercube", "Orthogonal"]]
+    #     res = res.to_numpy()
     return samples, square_primes, res
 
 def simulate_j_convergence():
     # Init values
-    s = int(200000)
     num_it = [50, 100, 150, 200, 400, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000]
+    s = int(18769)
     sampling_methods = [pure_random_sampler, lh_sampler, orthogonal_sampler]
     res = np.zeros((len(num_it), len(sampling_methods)))
 
     # Generate approximations
-    for sampler_i in range(len(sampling_methods)):
-        sampler = sampling_methods[sampler_i]
+    for sampler_i, sampler in enumerate(sampling_methods):
+        # Approximate area
+        mandelpoints_list = draw_mandel_samples(s, sampler, num_it)
+
         for j in range(len(num_it)):
-            print(f"Sampler index: {sampler_i}, j : {num_it[j]}")
-            if sampler == orthogonal_sampler:
-                # Number of samples must be square of prime number for othogonal sampler
-                s = 18769
-            # Approximate area
-            mandel_samples = draw_mandel_samples(s, sampler, num_it[j])
-            area = approx_area(s, len(mandel_samples))
+            area = approx_area(s, mandelpoints_list[j])
+            print(f"area: {area}: {s}, {mandelpoints_list[j]}")
+
             # Store results
             res[j, sampler_i] = area
+
     return num_it, res
 
 def plot_j_convergence(num_it, res):
@@ -141,8 +142,8 @@ def plot_s_convergence(s, square_primes, res):
     """Plot the convergence of Mandelbrot area estimation for increasing sample sizes s"""
     plt.figure(figsize=(10, 6))
     plt.subplot(121)
-    plt.plot(s[:-1], abs(res[-1, 0] - res[:-1, 0]), "bo-", label=f"Pure Random Sampling")
-    plt.plot(s[:-1], abs(res[-1, 1] - res[:-1, 1]), "go-", label=f"Latin Hypercube Sampling")
+    plt.plot(square_primes[:-1], abs(res[-1, 0] - res[:-1, 0]), "bo-", label=f"Pure Random Sampling")
+    plt.plot(square_primes[:-1], abs(res[-1, 1] - res[:-1, 1]), "go-", label=f"Latin Hypercube Sampling")
     plt.axhline(0, color="black", alpha=0.5, linestyle="dotted")
     plt.ylabel("Absolute Error $\Vert A_{i,k} - A_{i,s} \Vert$")
     plt.xlabel("k, Number of Samples Drawn")
@@ -173,7 +174,7 @@ def simulate_s_convergence():
     assert len(s) == len(square_primes)
 
     # Init sampling methods, number of iterations, results array
-    num_it = 2000
+    num_it = [2000]
     sampling_methods = [pure_random_sampler, lh_sampler, orthogonal_sampler]
     res = np.zeros((len(s), len(sampling_methods)))
 
@@ -181,18 +182,17 @@ def simulate_s_convergence():
     for sampler_i in range(len(sampling_methods)):
         sampler = sampling_methods[sampler_i]
         for k in range(len(s)):
-            if sampler == orthogonal_sampler:
-                print(f"Sampler index: {sampler_i}, k : {square_primes[k]}")
-                # Choose different sample sizes for orthogonal sampler
-                n_samples = int(square_primes[k])
-            else:
-                print(f"Sampler index: {sampler_i}, k : {s[k]}")
-                n_samples = int(s[k])
+            n_samples = int(square_primes[k])
+            print(f"Sampler index: {sampler_i}, k : {s[k]}")
+
             # Approximate area
-            mandel_samples = draw_mandel_samples(n_samples, sampler, num_it)
-            area = approx_area(n_samples, len(mandel_samples))
-            # Store result
-            res[k, sampler_i] = area
+            mandelpoints_list = draw_mandel_samples(n_samples, sampler, num_it)
+            for j in range(len(num_it)):
+                area = approx_area(n_samples, mandelpoints_list[j])
+                print(f"area: {area}: {n_samples}, {mandelpoints_list[j]}")
+                # Store results
+                res[k, sampler_i] = area
+
     return s, square_primes, res
 
 
@@ -212,9 +212,9 @@ def generate_square_primes(s):
 
 def plot_A_convergence(samples, square_primes, res):
     plt.axhline(MANDEL_AREA, color="black", linestyle="dashed", label="True Value")
-    plt.plot(samples[1:], res[1:, 0], "bo-", label="Pure Random Sampling")
-    plt.plot(samples[1:], res[1:, 1], "go-", label="Latin Hypercube Sampling")
-    plt.plot(square_primes[1:], res[1:,2], "co-", label="Orthogonal Sampling")
+    plt.plot(square_primes, res[:, 0], "bo-", label="Pure Random Sampling")
+    plt.plot(square_primes, res[:, 1], "go-", label="Latin Hypercube Sampling")
+    plt.plot(square_primes, res[:,2], "co-", label="Orthogonal Sampling")
     plt.legend()
     plt.xlabel("k, Number of Samples")
     plt.ylabel("Estimated Area of Mandelbrot Set")
