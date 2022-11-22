@@ -159,7 +159,7 @@ def plot_j_convergence(num_it, j_data):
 
     plt.axhline(0, color="black", alpha=0.5, linestyle="dotted")
 
-    plt.ylabel("$\Vert A_{i,s} - A_{j,s} \Vert$")
+    plt.ylabel("$\Vert A_{i,k} - A_{j,k} \Vert$")
     plt.xlabel("Number of Iterations $(j)$")
     plt.legend()
     plt.savefig("figures/convergence_i-j.png")
@@ -311,6 +311,6 @@ if __name__ == '__main__':
     num_it, j_data = get_j_convergence()
     plot_j_convergence(num_it, j_data)
     plot_A_convergence(num_it, j_data, "j")
-    samples, square_primes, s_data = get_s_convergence()
-    # plot_s_convergence(samples, square_primes, s_data)
-    plot_A_convergence(square_primes, s_data, "k")
+    # samples, square_primes, s_data = get_s_convergence()
+    # # plot_s_convergence(samples, square_primes, s_data)
+    # plot_A_convergence(square_primes, s_data, "k")
