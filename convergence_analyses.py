@@ -123,7 +123,7 @@ def simulate_j_convergence():
 
 def plot_j_convergence(num_it, j_data):
     """Plot the convergence of Mandelbrot area estimation for increasing number of iterations"""
-    plt.title("Convergence of $\Vert A_{i,k} - A_{j,k} \Vert$ to $A_{i,k}$ $(k=18769)$")
+    plt.title("Convergence of $A_{j,s}$ to $A_{i,s}$, $j < i$  $(s=18769)$")
 
     random_data = []
     lh_data = []
@@ -159,7 +159,7 @@ def plot_j_convergence(num_it, j_data):
 
     plt.axhline(0, color="black", alpha=0.5, linestyle="dotted")
 
-    plt.ylabel("$\Vert A_{i,s} - A_{j,s} \Vert$")
+    plt.ylabel("$\Vert A_{j,s} - A_{i,s} \Vert$")
     plt.xlabel("Number of Iterations $(j)$")
     plt.legend()
     plt.savefig("figures/convergence_i-j.png")
@@ -310,7 +310,7 @@ def plot_A_convergence(square_primes, data, data_name):
 if __name__ == '__main__':
     num_it, j_data = get_j_convergence()
     plot_j_convergence(num_it, j_data)
-    plot_A_convergence(num_it, j_data, "j")
-    samples, square_primes, s_data = get_s_convergence()
+    #plot_A_convergence(num_it, j_data, "j")
+    #samples, square_primes, s_data = get_s_convergence()
     # plot_s_convergence(samples, square_primes, s_data)
-    plot_A_convergence(square_primes, s_data, "k")
+    #plot_A_convergence(square_primes, s_data, "k")
