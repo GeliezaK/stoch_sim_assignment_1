@@ -54,7 +54,7 @@ if __name__ == '__main__':
     palette = denormalize([
         gradient(i / num_colors) for i in range(num_colors)
     ])
-    print(palette[127])
+
     mandelbrot_set = MandelbrotSet(max_iterations=20, escape_radius=1000)
 
     width, height = 600, 400
@@ -68,4 +68,5 @@ if __name__ == '__main__':
             index = int(min(stability * len(palette), len(palette) - 1))
             color = palette[index % len(palette)]
             image.putpixel((x, y), color)
+    image.save("mandelbrot_colored.png")
     image.show()
