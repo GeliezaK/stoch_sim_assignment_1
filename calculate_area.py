@@ -1,8 +1,8 @@
-import matplotlib.pyplot as plt
-import numpy as np
 import math
-from scipy.stats import qmc
+
+import numpy as np
 from PIL import Image, ImageDraw
+from scipy.stats import qmc
 
 
 def approx_area(n_samples, n_mandelbrot_samples):
@@ -19,6 +19,20 @@ def lh_sampler(s):
     sampler = qmc.LatinHypercube(d=2)
     sample = sampler.random(n=s)
     return sample[:, 0], sample[:, 1]
+
+
+def antithetic_variate_sampler(s):
+    """Draw 2 vectors of antithetic variates."""
+    rand1 = np.zeros(s)
+    rand2 = np.zeros(s)
+    for i in range(s):
+        if i % 2 == 0:
+            rand1[i] = np.random.random()
+            rand2[i] = np.random.random()
+        else:
+            rand1[i] = 1 - rand1[i-1]
+            rand2[i] = 1 - rand2[i-1]
+    return rand1, rand2
 
 
 def orthogonal_sampler(s):
@@ -48,6 +62,7 @@ def antithetic_variate_sampler(s):
             rand2[i] = 1 - rand2[i-1]
     return rand1, rand2
 
+
 def convert_to_circle(x, y):
     """Convert point (x,y) to a complex circle coordinate."""
     # center of the circle (x, y)
@@ -64,18 +79,13 @@ def convert_to_circle(x, y):
     return c
 
 
-def is_stable(c, num_iterations):
-    """Check if the given complex number is part of the mandelbrot set."""
-    z = 0
-    for _ in range(num_iterations):
-        z = z ** 2 + c
-        if abs(z) > 2:
-            return False
-    return True
-
-def is_stable2(c, num_iterations, mandelpoints_list):
+def count_stable_evals(c, num_iterations, mandelpoints_list):
+    """For each iteration in num_iterations, incrementally check if c is still stable. Store the count of
+    stable evaluations in mandelpoints_list."""
     stable_list = []
     z = 0
+
+    # Incrementally check if current c is still stable after num iterations
     for i, num in enumerate(num_iterations):
         if num != num_iterations[0]:
             num = num_iterations[i] - num_iterations[i-1]
@@ -89,7 +99,8 @@ def is_stable2(c, num_iterations, mandelpoints_list):
 
         if abs(z) <= 2:
             stable_list.append(True)
-        
+
+    # Count number of stable points and save count in mandelpoints list
     for i, stable in enumerate(stable_list):
         if stable:
             mandelpoints_list[i] += 1
@@ -98,22 +109,21 @@ def is_stable2(c, num_iterations, mandelpoints_list):
 
 
 def draw_mandel_samples(s, sampler, num_it):
-    """Given a sample size s, a sampling method sampler and number of iterations num_it; draw random numbers from the mandelbrot set."""
+    """Given a sample size s, a sampling method sampler and number of iterations num_it;
+    return a list that holds the number of stable points for each number of iterations per sample point."""
     mandelpoints_list = [0] * len(num_it)
     # Get two random number arrays
     rand1, rand2 = sampler(s)
     for j in range(s):
-        if j % 100000 == 0:
-            print(f"sample {j}")
-
         # Convert random numbers to circle points
         c = convert_to_circle(rand1[j], rand2[j])
-        mandelpoints_list = is_stable2(c, num_it, mandelpoints_list)
+        mandelpoints_list = count_stable_evals(c, num_it, mandelpoints_list)
 
     return mandelpoints_list
 
 
 def draw_mandelbrot(mandel_samples):
+    """Draw a black-and-white image of the Mandelbrot set. """
     width = 1000
     height = 1000
     im = Image.new("RGB", (width, height), color="white")
@@ -124,6 +134,3 @@ def draw_mandelbrot(mandel_samples):
         imag = height / 2 + np.imag(mandel_samples[i]) * height / 4  # should be height/(2*radius)
         draw.point((real, imag), fill="black")
     im.show()
-
-if __name__ == '__main__':
-    pass
