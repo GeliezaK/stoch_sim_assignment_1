@@ -58,8 +58,7 @@ def get_j_convergence():
         num_it, res = simulate_j_convergence()
         j_data.append(res)
         # Save to pandas
-        df = pd.DataFrame(res, columns=["Pure Random", "Latin Hypercube", "Orthogonal"])
-        # df = pd.DataFrame(res, columns=["Pure Random", "Latin Hypercube"])
+        df = pd.DataFrame(res, columns=["Pure Random", "Latin Hypercube", "Orthogonal", "antithetic_variate_sampler"])
         df["Number of Iterations"] = num_it
     df.to_csv(filepath, index=False)
     # else:
@@ -67,8 +66,7 @@ def get_j_convergence():
     #     df = pd.read_csv(filepath)
     #     num_it = df["Number of Iterations"]
     #     num_it = num_it.to_numpy()
-    #     # res = df[["Pure Random", "Latin Hypercube", "Orthogonal"]]
-    #     res = df[["Pure Random", "Latin Hypercube"]]
+    #     res = df[["Pure Random", "Latin Hypercube", "Orthogonal", "antithetic_variate_sampler"]]
     #     res = res.to_numpy()
     return num_it, j_data
 
@@ -85,7 +83,7 @@ def get_s_convergence():
         samples, square_primes, res = simulate_s_convergence()
         s_data.append(res)
         # Save to pandas
-        df = pd.DataFrame(res, columns=["Pure Random", "Latin Hypercube", "Orthogonal"])
+        df = pd.DataFrame(res, columns=["Pure Random", "Latin Hypercube", "Orthogonal", "antithetic_variate_sampler"])
         df["samples"] = samples
         df["square-prime-samples"] = square_primes
     df.to_csv(filepath, index=False)
@@ -96,7 +94,7 @@ def get_s_convergence():
     #     samples = samples.to_numpy()
     #     square_primes = df["square-prime-samples"]
     #     square_primes = square_primes.to_numpy()
-    #     res = df[["Pure Random", "Latin Hypercube", "Orthogonal"]]
+    #     res = df[["Pure Random", "Latin Hypercube", "Orthogonal", "antithetic_variate_sampler"]]
     #     res = res.to_numpy()
     return samples, square_primes, s_data
 
@@ -105,7 +103,7 @@ def simulate_j_convergence():
     # Init values
     num_it = [50, 100, 150, 200, 400, 800, 1000, 1200, 1400, 1600, 1800, 2000]
     s = int(18769)
-    sampling_methods = [pure_random_sampler, lh_sampler, orthogonal_sampler]
+    sampling_methods = [pure_random_sampler, lh_sampler, orthogonal_sampler, antithetic_variate_sampler]
     res = np.zeros((len(num_it), len(sampling_methods)))
 
     # Generate approximations
@@ -125,15 +123,17 @@ def simulate_j_convergence():
 
 def plot_j_convergence(num_it, j_data):
     """Plot the convergence of Mandelbrot area estimation for increasing number of iterations"""
-    plt.title("s = 18769")
+    plt.title("Convergence of $\Vert A_{i,k} - A_{j,k} \Vert$ to $A_{i,k}$ $(k=18769)$")
 
     random_data = []
     lh_data = []
     ot_data = []
+    av_data = []
     for res in j_data:
         random_data.append(abs(res[-1, 0] - res[:-1, 0]))
         lh_data.append(abs(res[-1, 1] - res[:-1, 1]))
         ot_data.append(abs(res[-1, 2] - res[:-1, 2]))
+        av_data.append(abs(res[-1, 3] - res[:-1, 3]))
     
     random_mean = np.mean(random_data, axis=0)
     random_std = np.std(random_data, axis=0)
@@ -144,20 +144,25 @@ def plot_j_convergence(num_it, j_data):
     ot_mean = np.mean(ot_data, axis=0)
     ot_std = np.std(ot_data, axis=0)
 
-    plt.plot(num_it[:-1], random_mean, "bo-", label=f"Pure random sampling")
-    plt.plot(num_it[:-1], lh_mean, "go-", label=f"Latin Hypercube sampling")
-    plt.plot(num_it[:-1], ot_mean, "co-", label="Orthogonal sampling")
+    av_mean = np.mean(av_data, axis=0)
+    av_std = np.std(av_data, axis=0)
 
-    plt.fill_between(num_it[:-1], random_mean+random_std, random_mean-random_std, alpha=0.35, color="b", linewidth=0)
-    plt.fill_between(num_it[:-1], lh_mean+lh_std, lh_mean-lh_std, alpha=0.35, color="g", linewidth=0)
-    plt.fill_between(num_it[:-1], ot_mean+ot_std, ot_mean-ot_std, alpha=0.35, color="c", linewidth=0)
+    plt.plot(num_it[:-1], random_mean, "o-", color="tab:blue", label=f"Pure random sampling")
+    plt.plot(num_it[:-1], lh_mean, "o-", color="tab:orange", label=f"Latin Hypercube sampling")
+    plt.plot(num_it[:-1], ot_mean, "o-", color="tab:green", label="Orthogonal sampling")
+    plt.plot(num_it[:-1], av_mean, "o-", color="tab:red", label="Antithetic variate sampling")
+
+    plt.fill_between(num_it[:-1], random_mean+random_std, random_mean-random_std, alpha=0.35, color="tab:blue", linewidth=0)
+    plt.fill_between(num_it[:-1], lh_mean+lh_std, lh_mean-lh_std, alpha=0.35, color="tab:orange", linewidth=0)
+    plt.fill_between(num_it[:-1], ot_mean+ot_std, ot_mean-ot_std, alpha=0.35, color="tab:green", linewidth=0)
+    plt.fill_between(num_it[:-1], av_mean+av_std, av_mean-av_std, alpha=0.35, color="tab:red", linewidth=0)
 
     plt.axhline(0, color="black", alpha=0.5, linestyle="dotted")
 
-    plt.ylabel("Absolute Error $\Vert A_{i,s} - A_{j,s} \Vert$")
-    plt.xlabel("j, Number of Iterations")
+    plt.ylabel("$\Vert A_{i,s} - A_{j,s} \Vert$")
+    plt.xlabel("Number of Iterations $(j)$")
     plt.legend()
-    plt.savefig("Convergence-j.png")
+    plt.savefig("figures/convergence_i-j.png")
     plt.show()
 
 
@@ -190,8 +195,7 @@ def plot_s_convergence(s, square_primes, res):
 
 def simulate_s_convergence():
     # Init number of samples
-    # s = [10e2, 10e3, 10e4, 20e4, 40e4, 60e4, 80e4, 10e5, 20e5, 40e5]  # must be square of prime number for othogonal sampler
-    s = [10e2, 10e3, 10e4, 20e4]
+    s = [10e2, 10e3, 10e4, 20e4, 40e4, 60e4, 80e4, 10e5, 20e5]  # must be square of prime number for othogonal sampler
     
     # Init number of samples for orthogonal sampler - have to be square prime numbers!
     square_primes = generate_square_primes(s)
@@ -199,7 +203,7 @@ def simulate_s_convergence():
 
     # Init sampling methods, number of iterations, results array
     num_it = [2000]
-    sampling_methods = [pure_random_sampler, lh_sampler, orthogonal_sampler]
+    sampling_methods = [pure_random_sampler, lh_sampler, orthogonal_sampler, antithetic_variate_sampler]
     res = np.zeros((len(s), len(sampling_methods)))
 
     # Generate approximations
@@ -234,16 +238,19 @@ def generate_square_primes(s):
     return square_primes
 
 
-def plot_A_convergence(samples, square_primes, s_data):
+def plot_A_convergence(square_primes, data, data_name):
     plt.axhline(MANDEL_AREA, color="black", linestyle="dashed", label="True Value")
 
     random_data = []
     lh_data = []
     ot_data = []
-    for res in s_data:
+    av_data = []
+
+    for res in data:
         random_data.append(res[:, 0])
         lh_data.append(res[:, 1])
         ot_data.append(res[:, 2])
+        av_data.append(res[:, 3])
 
     random_mean = np.mean(random_data, axis=0)
     random_std = np.std(random_data, axis=0)
@@ -254,28 +261,56 @@ def plot_A_convergence(samples, square_primes, s_data):
     ot_mean = np.mean(ot_data, axis=0)
     ot_std = np.std(ot_data, axis=0)
 
-    plt.plot(square_primes, random_mean, "bo-", label=f"Pure random sampling")
-    plt.plot(square_primes, lh_mean, "go-", label=f"Latin Hypercube sampling")
-    plt.plot(square_primes, ot_mean, "co-", label="Orthogonal sampling")
+    av_mean = np.mean(av_data, axis=0)
+    av_std = np.std(av_data, axis=0)
 
-    plt.fill_between(square_primes, random_mean+random_std, random_mean-random_std, alpha=0.35, color="b", linewidth=0)
-    plt.fill_between(square_primes, lh_mean+lh_std, lh_mean-lh_std, alpha=0.35, color="g", linewidth=0)
-    plt.fill_between(square_primes, ot_mean+ot_std, ot_mean-ot_std, alpha=0.35, color="c", linewidth=0)
+    plt.plot(square_primes, random_mean, "o-", color="tab:blue", label="Pure random sampling")
+    plt.plot(square_primes, lh_mean, "o-", color="tab:orange", label="Latin Hypercube sampling")
+    plt.plot(square_primes, ot_mean, "o-", color="tab:green", label="Orthogonal sampling")
+    plt.plot(square_primes, av_mean, "o-", color="tab:red", label="Antithetic variate sampling")
 
-    # plt.plot(square_primes, res[:, 0], "bo-", label="Pure Random Sampling")
-    # plt.plot(square_primes, res[:, 1], "go-", label="Latin Hypercube Sampling")
-    # plt.plot(square_primes, res[:,2], "co-", label="Orthogonal Sampling")
+    plt.fill_between(square_primes, random_mean+random_std, random_mean-random_std, alpha=0.35, color="tab:blue", linewidth=0)
+    plt.fill_between(square_primes, lh_mean+lh_std, lh_mean-lh_std, alpha=0.35, color="tab:orange", linewidth=0)
+    plt.fill_between(square_primes, ot_mean+ot_std, ot_mean-ot_std, alpha=0.35, color="tab:green", linewidth=0)
+    plt.fill_between(square_primes, av_mean+av_std, av_mean-av_std, alpha=0.35, color="tab:red", linewidth=0)
+
     plt.legend()
-    plt.xlabel("k, Number of Samples")
+    
+    if data_name == "k":
+        plt.xlabel("Number of Samples $(k)$")
+        plt.title("Convergence of Mandelbrot Area Approximation\nfor Different Sampling Methods $(j=2000)$")
+    elif data_name == "j":
+        plt.xlabel("Number of Iterations $(j)$")
+        plt.title("Convergence of Mandelbrot Area Approximation\nfor Different Sampling Methods $(k=18769)$")
+
     plt.ylabel("Estimated Area of Mandelbrot Set")
-    plt.title("Convergence of Mandelbrot Area Approximation \n for Different Sampling Methods")
-    plt.savefig("convergence-a.png")
+    plt.savefig(f"figures/convergence_a_{data_name}.png")
+    plt.show()
+
+    # plot std
+    plt.plot(square_primes, random_std, "o-", color="tab:blue", label="Pure random sampling")
+    plt.plot(square_primes, lh_std, "o-", color="tab:orange", label="Latin Hypercube sampling")
+    plt.plot(square_primes, ot_std, "o-", color="tab:green", label="Orthogonal sampling")
+    plt.plot(square_primes, av_std, "o-", color="tab:red", label="Antithetic variate sampling")
+
+    plt.ylim(bottom=0)
+    
+    plt.legend()
+    if data_name == "k":
+        plt.xlabel("Number of Samples $(k)$")
+        plt.title("Standard Deviation of estimated Area over 10 Simulations\nfor different Sampling Methods $(j=2000)$")
+    elif data_name == "j":
+        plt.xlabel("Number of Iterations $(j)$")
+        plt.title("Standard Deviation of estimated Area over 10 Simulations\nfor different Sampling Methods $(k=18769)$")
+    plt.ylabel("Standard Deviation")
+    plt.savefig(f"figures/standard_deviation_{data_name}.png")
     plt.show()
 
 
 if __name__ == '__main__':
-    # num_it, j_data = get_j_convergence()
-    # plot_j_convergence(num_it, j_data)
+    num_it, j_data = get_j_convergence()
+    plot_j_convergence(num_it, j_data)
+    plot_A_convergence(num_it, j_data, "j")
     samples, square_primes, s_data = get_s_convergence()
     # plot_s_convergence(samples, square_primes, s_data)
-    plot_A_convergence(samples, square_primes, s_data)
+    plot_A_convergence(square_primes, s_data, "k")

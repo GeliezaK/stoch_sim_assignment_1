@@ -21,6 +21,20 @@ def lh_sampler(s):
     return sample[:, 0], sample[:, 1]
 
 
+def antithetic_variate_sampler(s):
+    """Draw 2 vectors of antithetic variates."""
+    rand1 = np.zeros(s)
+    rand2 = np.zeros(s)
+    for i in range(s):
+        if i % 2 == 0:
+            rand1[i] = np.random.random()
+            rand2[i] = np.random.random()
+        else:
+            rand1[i] = 1 - rand1[i-1]
+            rand2[i] = 1 - rand2[i-1]
+    return rand1, rand2
+
+
 def orthogonal_sampler(s):
     """Draw 2 random number samples of size s from orthogonal sampler. NB: s has to be the square root of a prime number."""
     sampler = qmc.LatinHypercube(d=2, strength=2)
