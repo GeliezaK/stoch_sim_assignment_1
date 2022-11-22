@@ -35,6 +35,19 @@ def pure_random_sampler(s):
     return rand1, rand2
 
 
+def antithetic_variate_sampler(s):
+    """Draw 2 vectors of antithetic variates."""
+    rand1 = np.zeros(s)
+    rand2 = np.zeros(s)
+    for i in range(s):
+        if i % 2 == 0:
+            rand1[i] = np.random.random()
+            rand2[i] = np.random.random()
+        else:
+            rand1[i] = 1 - rand1[i-1]
+            rand2[i] = 1 - rand2[i-1]
+    return rand1, rand2
+
 def convert_to_circle(x, y):
     """Convert point (x,y) to a complex circle coordinate."""
     # center of the circle (x, y)
